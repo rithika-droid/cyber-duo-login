@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Shield, Trash2, Search, ArrowUpDown } from "lucide-react";
 
 interface WhitelistedIP {
   id: string;
@@ -15,18 +17,44 @@ const SecurityDashboard = () => {
   const [whitelistedIPs, setWhitelistedIPs] = useState<WhitelistedIP[]>([
     { id: "1", address: "127.0.0.1" },
     { id: "2", address: "192.168.24.48" },
+    { id: "3", address: "192.168.1.100" },
+    { id: "4", address: "10.0.0.5" },
   ]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterRange, setFilterRange] = useState("All");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const navigationTabs = [
     "Audit Log",
     "All Login Attempts",
-    "Decoy Alerts",
+    "Security Events",
     "Blocked IPs",
     "Whitelisted IPs"
   ];
 
   const removeIP = (id: string) => {
     setWhitelistedIPs(prev => prev.filter(ip => ip.id !== id));
+  };
+
+  const filteredAndSortedIPs = useMemo(() => {
+    let filtered = whitelistedIPs.filter(ip => {
+      const matchesSearch = ip.address.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesFilter = filterRange === "All" || 
+        (filterRange === "127.*" && ip.address.startsWith("127.")) ||
+        (filterRange === "192.*" && ip.address.startsWith("192.")) ||
+        (filterRange === "10.*" && ip.address.startsWith("10."));
+      return matchesSearch && matchesFilter;
+    });
+
+    return filtered.sort((a, b) => {
+      const aNum = a.address.split('.').map(num => parseInt(num.padStart(3, '0'))).join('');
+      const bNum = b.address.split('.').map(num => parseInt(num.padStart(3, '0'))).join('');
+      return sortOrder === "asc" ? aNum.localeCompare(bNum) : bNum.localeCompare(aNum);
+    });
+  }, [whitelistedIPs, searchTerm, filterRange, sortOrder]);
+
+  const toggleSort = () => {
+    setSortOrder(prev => prev === "asc" ? "desc" : "asc");
   };
 
   return (
@@ -72,7 +100,35 @@ const SecurityDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {whitelistedIPs.length > 0 ? (
+            {/* Search and Filter Controls */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search IP addresses..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={filterRange} onValueChange={setFilterRange}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue placeholder="Filter by range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Ranges</SelectItem>
+                  <SelectItem value="127.*">127.*</SelectItem>
+                  <SelectItem value="192.*">192.*</SelectItem>
+                  <SelectItem value="10.*">10.*</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" onClick={toggleSort} className="gap-2">
+                <ArrowUpDown className="h-4 w-4" />
+                Sort {sortOrder === "asc" ? "↑" : "↓"}
+              </Button>
+            </div>
+
+            {filteredAndSortedIPs.length > 0 ? (
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
@@ -82,7 +138,7 @@ const SecurityDashboard = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {whitelistedIPs.map((ip) => (
+                    {filteredAndSortedIPs.map((ip) => (
                       <TableRow key={ip.id}>
                         <TableCell className="font-mono">{ip.address}</TableCell>
                         <TableCell className="text-right">
@@ -104,10 +160,24 @@ const SecurityDashboard = () => {
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <Shield className="h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-lg font-medium text-muted-foreground">No whitelisted IPs found</p>
-                <p className="text-sm text-muted-foreground mt-1">All IP addresses have been removed from the whitelist</p>
+                <p className="text-lg font-medium text-muted-foreground">
+                  {whitelistedIPs.length === 0 ? "No whitelisted IPs found" : "No IPs match your search"}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {whitelistedIPs.length === 0 
+                    ? "All IP addresses have been removed from the whitelist" 
+                    : "Try adjusting your search or filter criteria"
+                  }
+                </p>
               </div>
             )}
+
+            {/* Back Button */}
+            <div className="mt-6 pt-4 border-t">
+              <Button variant="secondary" onClick={() => window.history.back()}>
+                Back to Credential Page
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </main>
