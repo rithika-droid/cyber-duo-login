@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Dashboard - Whitelisted IPs</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+            background-color: #f7f8fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-bottom: 1px solid #e1e5e9;
+            padding: 20px 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .shield-icon {
+            width: 32px;
+            height: 32px;
+            color: #3182ce;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            background: white;
+            border-bottom: 1px solid #e1e5e9;
+            padding: 0 20px;
+            overflow-x: auto;
+        }
+
+        .tab-list {
+            display: flex;
+            gap: 4px;
+            min-width: max-content;
+        }
+
+        .tab {
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #718096;
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            color: #2d3748;
+            background-color: #f7fafc;
+        }
+
+        .tab.active {
+            color: white;
+            background-color: #3182ce;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 30px 0;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+            align-items: center;
+        }
+
+        .search-container {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px 12px 40px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #3182ce;
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            color: #a0aec0;
+        }
+
+        .filter-select {
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            min-width: 150px;
+        }
+
+        .sort-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sort-btn:hover {
+            background-color: #f7fafc;
+            border-color: #cbd5e0;
+        }
+
+        .sort-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Table */
+        .table-container {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            overflow-x: auto;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            background-color: #f7fafc;
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #4a5568;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .table td {
+            padding: 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table tr:hover {
+            background-color: #f7fafc;
+        }
+
+        .ip-address {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            color: #2d3748;
+        }
+
+        .remove-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background-color: #e53e3e;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .remove-btn:hover {
+            background-color: #c53030;
+        }
+
+        .trash-icon {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-state .shield-icon {
+            width: 48px;
+            height: 48px;
+            color: #a0aec0;
+            margin: 0 auto 16px;
+        }
+
+        .empty-state h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #a0aec0;
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            color: #a0aec0;
+            font-size: 14px;
+        }
+
+        /* Back Button */
+        .back-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .back-btn {
+            padding: 12px 24px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .back-btn:hover {
+            background-color: #5a6268;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 16px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-container {
+                min-width: auto;
+            }
+
+            .filter-select,
+            .sort-btn {
+                min-width: auto;
+            }
+
+            .table th:last-child,
+            .table td:last-child {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <h1>
+                <svg class="shield-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                </svg>
+                Security Dashboard
+            </h1>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+        <div class="container">
+            <div class="tab-list">
+                <button class="tab">Audit Log</button>
+                <button class="tab">All Login Attempts</button>
+                <button class="tab">Security Events</button>
+                <button class="tab">Blocked IPs</button>
+                <button class="tab active">Whitelisted IPs</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="card">
+                <h2 class="card-title">
+                    <svg class="shield-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 20px; height: 20px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                    </svg>
+                    Whitelisted IPs
+                </h2>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <div class="search-container">
+                        <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <input type="text" id="searchInput" class="search-input" placeholder="Search IP addresses...">
+                    </div>
+                    
+                    <select id="filterSelect" class="filter-select">
+                        <option value="All">All Ranges</option>
+                        <option value="127.*">127.*</option>
+                        <option value="192.*">192.*</option>
+                        <option value="10.*">10.*</option>
+                    </select>
+                    
+                    <button id="sortBtn" class="sort-btn">
+                        <svg class="sort-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                        </svg>
+                        Sort <span id="sortOrder">↑</span>
+                    </button>
+                </div>
+
+                <!-- Table -->
+                <div id="tableContainer" class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>IP Address</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ipTableBody">
+                            <tr data-ip="127.0.0.1">
+                                <td class="ip-address">127.0.0.1</td>
+                                <td style="text-align: right;">
+                                    <button class="remove-btn" onclick="removeIP(this)">
+                                        <svg class="trash-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                        Remove
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr data-ip="192.168.24.48">
+                                <td class="ip-address">192.168.24.48</td>
+                                <td style="text-align: right;">
+                                    <button class="remove-btn" onclick="removeIP(this)">
+                                        <svg class="trash-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                        Remove
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr data-ip="192.168.1.100">
+                                <td class="ip-address">192.168.1.100</td>
+                                <td style="text-align: right;">
+                                    <button class="remove-btn" onclick="removeIP(this)">
+                                        <svg class="trash-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                        Remove
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr data-ip="10.0.0.5">
+                                <td class="ip-address">10.0.0.5</td>
+                                <td style="text-align: right;">
+                                    <button class="remove-btn" onclick="removeIP(this)">
+                                        <svg class="trash-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                        Remove
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State (hidden by default) -->
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <svg class="shield-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                    </svg>
+                    <h3 id="emptyTitle">No whitelisted IPs found</h3>
+                    <p id="emptyMessage">All IP addresses have been removed from the whitelist</p>
+                </div>
+
+                <!-- Back Button -->
+                <div class="back-section">
+                    <button class="back-btn" onclick="window.location.href='login.html'">
+                        Back to Login Page
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let sortAscending = true;
+        let allIPs = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateIPList();
+            
+            // Search functionality
+            document.getElementById('searchInput').addEventListener('input', filterAndSortIPs);
+            
+            // Filter functionality
+            document.getElementById('filterSelect').addEventListener('change', filterAndSortIPs);
+            
+            // Sort functionality
+            document.getElementById('sortBtn').addEventListener('click', function() {
+                sortAscending = !sortAscending;
+                document.getElementById('sortOrder').textContent = sortAscending ? '↑' : '↓';
+                filterAndSortIPs();
+            });
+        });
+
+        function updateIPList() {
+            const tbody = document.getElementById('ipTableBody');
+            const rows = tbody.querySelectorAll('tr');
+            allIPs = Array.from(rows).map(row => ({
+                element: row,
+                ip: row.dataset.ip
+            }));
+        }
+
+        function removeIP(button) {
+            const row = button.closest('tr');
+            row.remove();
+            updateIPList();
+            filterAndSortIPs();
+        }
+
+        function filterAndSortIPs() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filterRange = document.getElementById('filterSelect').value;
+            const tbody = document.getElementById('ipTableBody');
+            const tableContainer = document.getElementById('tableContainer');
+            const emptyState = document.getElementById('emptyState');
+            const emptyTitle = document.getElementById('emptyTitle');
+            const emptyMessage = document.getElementById('emptyMessage');
+            
+            // Get current IPs
+            updateIPList();
+            
+            // Filter IPs
+            let filteredIPs = allIPs.filter(ipData => {
+                const ip = ipData.ip;
+                const matchesSearch = ip.toLowerCase().includes(searchTerm);
+                const matchesFilter = filterRange === 'All' || 
+                    (filterRange === '127.*' && ip.startsWith('127.')) ||
+                    (filterRange === '192.*' && ip.startsWith('192.')) ||
+                    (filterRange === '10.*' && ip.startsWith('10.'));
+                
+                return matchesSearch && matchesFilter;
+            });
+            
+            // Sort IPs
+            filteredIPs.sort((a, b) => {
+                const aNum = a.ip.split('.').map(num => parseInt(num.padStart(3, '0'))).join('');
+                const bNum = b.ip.split('.').map(num => parseInt(num.padStart(3, '0'))).join('');
+                return sortAscending ? aNum.localeCompare(bNum) : bNum.localeCompare(aNum);
+            });
+            
+            // Clear tbody
+            tbody.innerHTML = '';
+            
+            if (filteredIPs.length > 0) {
+                // Show table, hide empty state
+                tableContainer.style.display = 'block';
+                emptyState.style.display = 'none';
+                
+                // Add filtered and sorted rows
+                filteredIPs.forEach(ipData => {
+                    tbody.appendChild(ipData.element);
+                });
+            } else {
+                // Hide table, show empty state
+                tableContainer.style.display = 'none';
+                emptyState.style.display = 'block';
+                
+                // Update empty state message
+                if (allIPs.length === 0) {
+                    emptyTitle.textContent = 'No whitelisted IPs found';
+                    emptyMessage.textContent = 'All IP addresses have been removed from the whitelist';
+                } else {
+                    emptyTitle.textContent = 'No IPs match your search';
+                    emptyMessage.textContent = 'Try adjusting your search or filter criteria';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
